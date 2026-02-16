@@ -20,8 +20,8 @@ export class ProductManagementStack extends cdk.Stack {
       billingMode:dynamodb.BillingMode.PAY_PER_REQUEST,
       removalPolicy:cdk.RemovalPolicy.DESTROY
     });
-    const productImagesBucket = new s3.Bucket(this, `${this.stackName}-Products-Table`, {
-      bucketName:`${this.stackName.toLowerCase()}-images`,
+    const productImagesBucket = new s3.Bucket(this, `${this.stackName}-Products-Images`, {
+      bucketName:`${this.stackName.toLowerCase()}-images-${this.account}-${this.region}`,
       removalPolicy:cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects:true
     });
@@ -88,6 +88,22 @@ export class ProductManagementStack extends cdk.Stack {
       path:'/products/{id}',
       methods:[apigatewayv2.HttpMethod.DELETE],
       integration: new apigatewayv2_integrations.HttpLambdaIntegration('DeleteProductIntegration', deleteProductLambda)
+    });
+
+    new cdk.CfnOutput(this, 'ApiGatewayUrl', {
+      value:api.url!,
+      description:'API Gateway URL for the product',
+      exportName: `${this.stackName}-ApiGatewayUrl`
+    });
+    new cdk.CfnOutput(this, 'ProductsTableName', {
+      value:productsTable.tableName,
+      description:'Dynamo DB table name for Products',
+      exportName: `${this.stackName}-Products-TableName`
+    });
+    new cdk.CfnOutput(this, 'ProductsImagesBucketName', {
+      value: productImagesBucket.bucketName,
+      description: 'S3 Bucket name for product images',
+      exportName: `${this.stackName}-Product-Images-BucketName`
     });
   }
 }

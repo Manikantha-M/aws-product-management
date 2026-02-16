@@ -1,0 +1,26 @@
+@URL = https://zwu5s20gv4.execute-api.eu-north-1.amazonaws.com/
+### Get all products
+GET {{URL}}/products
+
+### Create a product
+POST {{URL}}/products
+Content-Type: application/json
+
+{
+    "name":"coding addict"
+}
+
+# ### Get a user
+# GET {{URL}}/users/6d6f8c2f-9988-4afd-a289-4fefa585b02b
+
+# ### Update a user
+# PUT {{URL}}/users/6d6f8c2f-9988-4afd-a289-4fefa585b02b
+# Content-Type: application/json
+
+# {
+#     "name":"coding addict",
+#     "email": "coding@addict.com"
+# }
+
+### Delete a Product
+DELETE {{URL}}/products/2aa578be-0161-478d-83d8-f8379d913d7e
