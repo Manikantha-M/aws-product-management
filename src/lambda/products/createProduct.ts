@@ -36,9 +36,40 @@ export const handler = async (event:APIGatewayProxyEventV2):Promise<APIGatewayPr
 
         let imageUrl:string;
         try {
-            console.log('starting S3 upload process')
-        } catch (error) {
-            
+            console.log('starting S3 upload process');
+            console.log('Bucket Name:', PRODUCT_IMAGES_BUCKET_NAME);
+            // Extract Base64 data
+            const base64Data = product.imageData.replace(/^data:image\/[a-z]+;base64,/, '');
+            const imageBuffer = Buffer.from(base64Data, 'base64');
+            const fileExtension = product.imageData.includes('data:image/jpeg') ? 'jpg' : product.imageData.includes('data:image/png') ? 'png' : 'jpg';
+            const s3Key = `products/${prodcutId}.${fileExtension}`;
+            console.log('S3 Upload Parameters:', {
+                bucket: PRODUCT_IMAGES_BUCKET_NAME,
+                key:s3Key,
+                contentType: `image:${fileExtension}`,
+                bufferSize: imageBuffer.length
+            });
+            await s3Client.send(new PutObjectCommand({
+                Bucket: PRODUCT_IMAGES_BUCKET_NAME,
+                Key:s3Key,
+                Body:imageBuffer,
+                ContentType:`image/${fileExtension}`
+            }));
+            const imageUrl =`https://${PRODUCT_IMAGES_BUCKET_NAME}.s3.amazonaws.com/${s3Key}`;
+            console.log('image uploaded to S3 successfully', imageUrl)
+        } catch (s3Error: any) {
+            console.error('Error uploading image to S3', s3Error);
+            console.error('S3 Error details', {
+                message: s3Error.message,
+                code:s3Error.code,
+                statusCode:s3Error.statusCode,
+                requestId:s3Error.requestId,
+                bucketName:PRODUCT_IMAGES_BUCKET_NAME
+            });
+            return {
+                statusCode:200,
+                body:JSON.stringify({message:'Failed to upload image', error:s3Error.message})
+            }
         }
 
         return {
