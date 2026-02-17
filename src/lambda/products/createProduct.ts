@@ -55,7 +55,7 @@ export const handler = async (event:APIGatewayProxyEventV2):Promise<APIGatewayPr
                 Body:imageBuffer,
                 ContentType:`image/${fileExtension}`
             }));
-            const imageUrl =`https://${PRODUCT_IMAGES_BUCKET_NAME}.s3.amazonaws.com/${s3Key}`;
+            imageUrl =`https://${PRODUCT_IMAGES_BUCKET_NAME}.s3.amazonaws.com/${s3Key}`;
             console.log('image uploaded to S3 successfully', imageUrl)
         } catch (s3Error: any) {
             console.error('Error uploading image to S3', s3Error);
@@ -67,20 +67,47 @@ export const handler = async (event:APIGatewayProxyEventV2):Promise<APIGatewayPr
                 bucketName:PRODUCT_IMAGES_BUCKET_NAME
             });
             return {
-                statusCode:200,
+                statusCode:500,
                 body:JSON.stringify({message:'Failed to upload image', error:s3Error.message})
+            };
+        };
+        const productRecord:ProductRecord = {
+            id: prodcutId,
+            name: product.name,
+            description: product.description,
+            price: product.price,
+            imageUrl: imageUrl,
+            createdAt: timestamp,
+            updatedAt:timestamp
+        };
+        try {
+            await docClient.send(new PutCommand({
+                TableName: PRODUCTS_TABLE_NAME,
+                Item: productRecord
+            }));
+            console.log('product stored in DynamoDB', prodcutId);
+        } catch (dynamodbError:any) {
+            console.log('Error storing product in DynamoDB:', dynamodbError);
+            return{
+                statusCode: 500,
+                body: JSON.stringify({
+                    message: 'Failed to store product', error: dynamodbError.message
+                })
             }
-        }
-
-        return {
-            statusCode: 200,
-            body: JSON.stringify({message:'create prodcut'})
-        }
+        };
+        return{
+            statusCode: 201,
+            body: JSON.stringify({
+                message:'Product created Successfully',
+                product: productRecord
+            })
+        };
 
     } catch (error) {
+        console.log('Error processing request:', error)
         return {
-            statusCode: 200,
-            body: JSON.stringify({message:'create prodcut'})
+            statusCode: 500,
+            body: JSON.stringify({message:'Internal server error'})
         }
     }
 }
